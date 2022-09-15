@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { MantineProvider } from "@mantine/core";
+import { MantineProvider, Loader, LoadingOverlay } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
 import { Web3ReactProvider } from "@web3-react/core";
 import { Web3Provider } from "@ethersproject/providers";
@@ -7,6 +7,8 @@ import AppLayout from "../src/layout/App.layout";
 import OurGlobalStyles from "../src/shared/GlobalStyles";
 import { useRouter } from "next/router";
 import NextNProgress from "nextjs-progressbar";
+import Router from "next/router";
+import { useState, useEffect } from "react";
 
 function getLibrary(provider) {
   return new Web3Provider(provider);
@@ -14,6 +16,20 @@ function getLibrary(provider) {
 
 export default function App({ Component, pageProps, router }) {
   router = useRouter();
+
+  const [pageLoading, setPageLoading] = useState(false);
+  useEffect(() => {
+    const handleStart = () => {
+      setPageLoading(true);
+    };
+    const handleComplete = () => {
+      setPageLoading(false);
+    };
+
+    router.events.on("routeChangeStart", handleStart);
+    router.events.on("routeChangeComplete", handleComplete);
+    router.events.on("routeChangeError", handleComplete);
+  }, [router, setPageLoading]);
   return (
     <>
       <NextNProgress />
@@ -33,6 +49,7 @@ export default function App({ Component, pageProps, router }) {
             /** Put your mantine theme override here */
             colorScheme: "light",
             fontFamily: "'Archivo', sans-serif",
+            loader: "bars",
           }}
         >
           <NotificationsProvider
@@ -45,6 +62,9 @@ export default function App({ Component, pageProps, router }) {
             zIndex={2077}
           >
             <OurGlobalStyles />
+
+            <LoadingOverlay visible={pageLoading} overlayBlur={2} />
+
             <AppLayout
               Component={Component}
               router={router}
